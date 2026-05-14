@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Registro de Asistencia</title>
+<link rel="stylesheet" href="css/asistente.css">
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">📋</div>
+  <h1>Registro de Asistencia</h1>
+  <p id="event-name">Verificando…</p>
+</div>
+
+<div class="main">
+
+  <div class="status-card checking" id="geo-status">
+    <div class="spinner" id="geo-spinner"></div>
+    <div class="status-text">
+      <strong>Verificando ubicación…</strong>
+      <span>Por favor acepta el permiso de ubicación</span>
+    </div>
+  </div>
+
+  <div class="form-card disabled" id="form-card">
+    <p class="form-title">Completa tus datos para registrar tu asistencia</p>
+
+    <div class="field">
+      <label for="nombres">Nombres *</label>
+      <input type="text" id="nombres" placeholder="Ej: María Fernanda" autocomplete="given-name">
+      <div class="field-error" id="err-nombres">Por favor ingresa tus nombres</div>
+    </div>
+
+    <div class="field">
+      <label for="apellidos">Apellidos *</label>
+      <input type="text" id="apellidos" placeholder="Ej: García López" autocomplete="family-name">
+      <div class="field-error" id="err-apellidos">Por favor ingresa tus apellidos</div>
+    </div>
+
+    <div class="field">
+      <label for="cedula">Documento de identidad *</label>
+      <input type="text" id="cedula" placeholder="Ej: 12345678" inputmode="numeric">
+      <div class="field-error" id="err-cedula">Por favor ingresa tu documento de identidad</div>
+    </div>
+
+    <div class="field">
+      <label for="trabajo">Lugar de trabajo *</label>
+      <input type="text" id="trabajo" placeholder="Ej: Hospital Municipal">
+      <div class="field-error" id="err-trabajo">Por favor ingresa tu lugar de trabajo</div>
+    </div>
+
+    <div class="field">
+      <label for="profesion">Profesión *</label>
+      <input type="text" id="profesion" placeholder="Ej: Médico, Enfermero, Administrador">
+      <div class="field-error" id="err-profesion">Por favor ingresa tu profesión</div>
+    </div>
+
+    <div class="field">
+      <label for="fuente">Fuente de financiamiento *</label>
+      <input type="text" id="fuente" placeholder="Ej: TGN, CONTRATO, ITEM-MUNICIPAL">
+      <div class="field-error" id="err-fuente">Por favor ingresa la fuente de financiamiento</div>
+    </div>
+
+    <div class="field">
+      <label for="celular">Celular (WhatsApp) *</label>
+      <input type="tel" id="celular" placeholder="Ej: 70012345" autocomplete="tel" inputmode="tel">
+      <div class="field-error" id="err-celular">Por favor ingresa tu número de celular</div>
+    </div>
+
+    <button class="btn" id="submit-btn" onclick="enviarRegistro()">
+      <span id="btn-text">Registrar mi asistencia</span>
+    </button>
+  </div>
+
+  <!-- ✅ Éxito -->
+  <div class="success-screen" id="success-screen">
+    <div class="status-circle circle-success">✓</div>
+    <h2>¡Registro exitoso!</h2>
+    <p class="screen-text">Tu asistencia ha sido registrada correctamente.<br>¡Bienvenido al evento!</p>
+  </div>
+
+  <!-- 📍 Fuera del radio -->
+  <div class="blocked-screen" id="blocked-screen">
+    <div class="status-circle circle-error">📍</div>
+    <h2>Fuera del evento</h2>
+    <p class="screen-text">Tu ubicación indica que no estás en el lugar del evento. El registro solo está disponible de forma presencial.</p>
+    <div class="info-badge badge-error" id="distance-info">Distancia: — m</div>
+  </div>
+
+  <!-- 🚫 Permiso denegado -->
+  <div class="denied-screen" id="denied-screen">
+    <div class="status-circle circle-error">🚫</div>
+    <h2>Ubicación requerida</h2>
+    <p class="screen-text">Este sistema requiere acceso a tu ubicación para verificar que estás presente en el evento. Sin ese permiso no es posible registrarte.</p>
+    <div class="steps-box">
+      <p>¿Cómo activar la ubicación?</p>
+      <div class="step-item"><div class="step-num">1</div><span>Toca el ícono de candado o "i" en la barra del navegador</span></div>
+      <div class="step-item"><div class="step-num">2</div><span>Busca "Ubicación" y cámbiala a "Permitir"</span></div>
+      <div class="step-item"><div class="step-num">3</div><span>Recarga la página y acepta el permiso</span></div>
+    </div>
+  </div>
+
+  <!-- ⚠️ Ya registrado -->
+  <div class="already-screen" id="already-screen">
+    <div class="status-circle circle-warning">⚠️</div>
+    <h2>Ya estás registrado</h2>
+    <p class="screen-text">Este dispositivo ya fue usado para registrar asistencia en este evento. Solo se permite un registro por persona.</p>
+    <div class="info-badge badge-warning" id="already-name"></div>
+  </div>
+
+  <!-- 🔒 URL inválida -->
+  <div class="invalid-screen" id="invalid-screen">
+    <div class="status-circle circle-error">🔒</div>
+    <h2>Enlace inválido</h2>
+    <p class="screen-text">Este enlace no es válido o ha sido modificado. Por favor escanea el QR oficial del evento.</p>
+  </div>
+
+  <div class="footer">Sistema de registro desarrollado por:</div>
+  <div class="footer-logo">
+    <img src="public/img/LOGO_N.png" alt="LPV Solutions">
+  </div>
+</div>
+
+<script src="js/asistente.js"></script>
+</body>
+</html>

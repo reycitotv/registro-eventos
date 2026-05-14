@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Admin — Configuración del Evento</title>
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">🛠️</div>
+  <div>
+    <h1>Panel del organizador</h1>
+    <p>Configura el evento y obtén la URL</p>
+  </div>
+  <img class="header-logo" src="public/img/LOGO_B.png" alt="LPV Solutions">
+</div>
+
+<div class="main">
+
+  <div class="card">
+    <div class="card-title">✏️ Datos del evento</div>
+
+    <div class="field">
+      <label>Nombre del evento</label>
+      <input type="text" id="cfg-nombre" placeholder="Ej: Congreso Anual 2026">
+    </div>
+
+    <div class="field">
+      <label>Ubicación del evento</label>
+      <button class="gps-btn" onclick="usarMiUbicacion()">
+        <span id="gps-txt">📍 Capturar mi ubicación actual</span>
+      </button>
+      <div class="coords-row">
+        <div>
+          <label>Latitud</label>
+          <input type="number" id="cfg-lat" placeholder="-17.7345" step="any">
+        </div>
+        <div>
+          <label>Longitud</label>
+          <input type="number" id="cfg-lng" placeholder="-63.1737" step="any">
+        </div>
+      </div>
+      <p class="hint">Toca el botón estando físicamente en el lugar del evento.</p>
+    </div>
+
+    <div class="field">
+      <label>Radio permitido (metros)</label>
+      <input type="number" id="cfg-radio" placeholder="50" value="50" min="10" max="500">
+      <p class="hint">50m = solo dentro del edificio · 150m = espacio abierto</p>
+    </div>
+
+    <div class="field">
+      <label>Clave secreta de verificación</label>
+      <div class="secret-row">
+        <input type="password" id="cfg-clave" placeholder="Escribe una clave secreta">
+        <button class="eye-btn" onclick="toggleClave()">👁️</button>
+      </div>
+      <p class="hint">Esta clave protege el QR. Si alguien modifica la URL, la verificación falla. Usa la misma clave siempre.</p>
+    </div>
+
+    <div class="divider"></div>
+    <button class="btn-save" onclick="generarURL()">🔒 Generar URL cifrada →</button>
+  </div>
+
+  <div class="result-card" id="result-card">
+    <div class="result-title">✅ URL cifrada — lista para el QR</div>
+    <div class="info-row"><span class="key">Evento</span><span class="val" id="res-nombre">—</span></div>
+    <div class="info-row"><span class="key">Radio</span><span class="val" id="res-radio">—</span></div>
+    <div class="info-row"><span class="key">Coordenadas</span><span class="val" id="res-coords">—</span></div>
+    <div class="info-row"><span class="key">Protección</span><span class="val">🔒 Cifrada con clave secreta</span></div>
+    <div class="url-box" id="result-url"></div>
+    <div class="action-row">
+      <button class="action-btn" onclick="copiarURL()">📋 Copiar URL</button>
+      <button class="action-btn primary" onclick="abrirQR()">🔗 Generar QR</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/admin.js"></script>
+</body>
+</html>
