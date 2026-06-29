@@ -12,15 +12,16 @@
   <div class="header-icon">🛠️</div>
   <div>
     <h1>Panel del organizador</h1>
-    <p>Configura el evento y obtén la URL</p>
+    <p>Configura el evento y el formulario</p>
   </div>
   <img class="header-logo" src="public/img/LOGO_B.png" alt="LPV Solutions">
 </div>
 
 <div class="main">
 
+  <!-- ── DATOS DEL EVENTO ── -->
   <div class="card">
-    <div class="card-title">✏️ Datos del evento</div>
+    <div class="card-title">📋 Datos del evento</div>
 
     <div class="field">
       <label>Nombre del evento</label>
@@ -54,21 +55,44 @@
     <div class="field">
       <label>Clave secreta de verificación</label>
       <div class="secret-row">
-        <input type="password" id="cfg-clave" placeholder="Escribe una clave secreta">
+        <input type="password" id="cfg-clave" placeholder="Escribe tu clave secreta">
         <button class="eye-btn" onclick="toggleClave()">👁️</button>
       </div>
-      <p class="hint">Esta clave protege el QR. Si alguien modifica la URL, la verificación falla. Usa la misma clave siempre.</p>
+      <p class="hint">Debe coincidir con la clave en asistente.js. Protege el QR contra modificaciones.</p>
     </div>
-
-    <div class="divider"></div>
-    <button class="btn-save" onclick="generarURL()">🔒 Generar URL cifrada →</button>
   </div>
 
+  <!-- ── CONSTRUCTOR DE PREGUNTAS ── -->
+  <div class="card">
+    <div class="questions-header">
+      <div class="card-title" style="margin-bottom:0">❓ Preguntas del formulario</div>
+      <span class="questions-count" id="questions-count">0 preguntas</span>
+    </div>
+    <p class="hint" style="margin-bottom:14px">Agrega las preguntas que deberá responder cada asistente. Arrástralas para reordenar.</p>
+
+    <div class="questions-list" id="questions-list">
+      <div class="questions-empty" id="questions-empty">
+        Aún no hay preguntas.<br>Toca el botón para agregar la primera.
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <button class="btn-add-question" onclick="abrirModal()">
+        ＋ Agregar pregunta
+      </button>
+    </div>
+  </div>
+
+  <!-- ── GENERAR URL ── -->
+  <button class="btn-save" onclick="generarURL()">🔒 Generar URL cifrada →</button>
+
+  <!-- ── RESULTADO ── -->
   <div class="result-card" id="result-card">
     <div class="result-title">✅ URL cifrada — lista para el QR</div>
     <div class="info-row"><span class="key">Evento</span><span class="val" id="res-nombre">—</span></div>
     <div class="info-row"><span class="key">Radio</span><span class="val" id="res-radio">—</span></div>
     <div class="info-row"><span class="key">Coordenadas</span><span class="val" id="res-coords">—</span></div>
+    <div class="info-row"><span class="key">Preguntas</span><span class="val" id="res-preguntas">—</span></div>
     <div class="info-row"><span class="key">Protección</span><span class="val">🔒 Cifrada con clave secreta</span></div>
     <div class="url-box" id="result-url"></div>
     <div class="action-row">
@@ -77,6 +101,53 @@
     </div>
   </div>
 
+</div>
+
+<!-- ── MODAL NUEVA/EDITAR PREGUNTA ── -->
+<div class="modal-overlay" id="modal-overlay" onclick="cerrarModalSiFondo(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 id="modal-title">Nueva pregunta</h3>
+    <p class="modal-sub">Define cómo el asistente responderá esta pregunta</p>
+
+    <div class="field">
+      <label>Texto de la pregunta</label>
+      <input type="text" id="q-label" placeholder="Ej: ¿Cuál es tu profesión?">
+    </div>
+
+    <div class="field">
+      <label>Tipo de respuesta</label>
+      <div class="type-selector">
+        <button class="type-btn active" data-type="texto" onclick="seleccionarTipo('texto')">
+          <span class="type-icon">✏️</span>
+          <span class="type-name">Texto libre</span>
+        </button>
+        <button class="type-btn" data-type="lista" onclick="seleccionarTipo('lista')">
+          <span class="type-icon">📋</span>
+          <span class="type-name">Lista de opciones</span>
+        </button>
+        <button class="type-btn" data-type="sino" onclick="seleccionarTipo('sino')">
+          <span class="type-icon">✅</span>
+          <span class="type-name">Sí / No</span>
+        </button>
+        <button class="type-btn" data-type="fecha" onclick="seleccionarTipo('fecha')">
+          <span class="type-icon">📅</span>
+          <span class="type-name">Fecha</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="options-section" id="options-section" style="display:none">
+      <label>Opciones de la lista</label>
+      <div class="options-list" id="options-list"></div>
+      <button class="btn-add-option" onclick="agregarOpcion()">＋ Agregar opción</button>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-confirm" onclick="guardarPregunta()">Guardar pregunta</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
