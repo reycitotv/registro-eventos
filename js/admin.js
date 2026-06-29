@@ -48,12 +48,19 @@ function toggleClave() {
 
 // ── MODAL ────────────────────────────────────────────────────
 function abrirModal(id = null) {
+  // Limpiar estado completamente
   editandoId = id;
   tipoActual = 'texto';
+
   document.getElementById('modal-title').textContent = id ? 'Editar pregunta' : 'Nueva pregunta';
   document.getElementById('q-label').value = '';
-  seleccionarTipo('texto');
   document.getElementById('options-list').innerHTML = '';
+  document.getElementById('options-section').style.display = 'none';
+
+  // Resetear botones de tipo
+  document.querySelectorAll('.type-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.type === 'texto');
+  });
 
   if (id !== null) {
     const q = preguntas.find(p => p.id === id);
@@ -65,11 +72,17 @@ function abrirModal(id = null) {
   }
 
   document.getElementById('modal-overlay').classList.add('open');
-  setTimeout(() => document.getElementById('q-label').focus(), 100);
 }
 
 function cerrarModal() {
   document.getElementById('modal-overlay').classList.remove('open');
+  document.getElementById('q-label').value = '';
+  document.getElementById('options-list').innerHTML = '';
+  document.getElementById('options-section').style.display = 'none';
+  document.querySelectorAll('.type-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.type === 'texto');
+  });
+  tipoActual = 'texto';
   editandoId = null;
 }
 
@@ -89,12 +102,21 @@ function agregarOpcion(valor = '') {
   const list = document.getElementById('options-list');
   const row  = document.createElement('div');
   row.className = 'option-row';
-  row.innerHTML = `
-    <input type="text" placeholder="Ej: Médico" value="${valor}">
-    <button class="btn-remove-option" onclick="this.parentElement.remove()">✕</button>
-  `;
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = 'Ej: Médico';
+  input.value = valor;
+
+  const btn = document.createElement('button');
+  btn.className = 'btn-remove-option';
+  btn.textContent = '✕';
+  btn.type = 'button';
+  btn.addEventListener('click', () => row.remove());
+
+  row.appendChild(input);
+  row.appendChild(btn);
   list.appendChild(row);
-  row.querySelector('input').focus();
 }
 
 function guardarPregunta() {
@@ -159,12 +181,22 @@ function renderPreguntas() {
         <span class="question-label">${q.label}</span>
         <span class="question-type-badge ${TIPO_BADGE[q.tipo]}">${TIPO_LABELS[q.tipo]}</span>
         <div class="question-actions">
-          <button class="btn-edit-q" onclick="abrirModal(${q.id})" title="Editar">✏️</button>
-          <button class="btn-delete-q" onclick="eliminarPregunta(${q.id})" title="Eliminar">🗑️</button>
+          <button class="btn-edit-q" title="Editar">✏️</button>
+          <button class="btn-delete-q" title="Eliminar">🗑️</button>
         </div>
       </div>
       ${opcionesHTML}
     `;
+
+    card.querySelector('.btn-edit-q').addEventListener('click', (e) => {
+      e.stopPropagation();
+      abrirModal(q.id);
+    });
+
+    card.querySelector('.btn-delete-q').addEventListener('click', (e) => {
+      e.stopPropagation();
+      eliminarPregunta(q.id);
+    });
 
     card.addEventListener('dragstart', (e) => {
       dragSrcIdx = idx;
