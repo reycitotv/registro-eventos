@@ -105,7 +105,7 @@ function agregarOpcion(valor = '') {
 
   const input = document.createElement('input');
   input.type = 'text';
-  input.placeholder = 'Ej: Médico';
+  input.placeholder = 'Escribe la primer opción..';
   input.value = valor;
 
   const btn = document.createElement('button');
