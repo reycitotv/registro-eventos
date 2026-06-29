@@ -1,4 +1,4 @@
-const SCRIPT_URL    = "https://script.google.com/macros/s/AKfycbzuj3wnwr8wIRgOx8MvzUhTR_0l_NkVukUpMUNGraRkdZDOZRyj9p7skWOwW7caYR3bAA/exec";
+const SCRIPT_URL    = "https://script.google.com/macros/s/AKfycbw46MMZYRp_5IdIdegZLjGaWFAXEMErUIdiNyLYMh9wII-5gOmo9-mtitV3x1BVJmwtAw/exec";
 const CLAVE_SECRETA = "clave123";
 
 // ── DESCIFRAR Y VERIFICAR URL ────────────────────────────────
