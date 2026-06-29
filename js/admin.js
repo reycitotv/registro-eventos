@@ -154,15 +154,17 @@ function renderPreguntas() {
 
   count.textContent = `${preguntas.length} pregunta${preguntas.length !== 1 ? 's' : ''}`;
 
+  // Limpiar solo las tarjetas, nunca el elemento empty
+  Array.from(list.children).forEach(child => {
+    if (child.id !== 'questions-empty') child.remove();
+  });
+
   if (preguntas.length === 0) {
-    list.innerHTML = '';
-    list.appendChild(empty);
     empty.style.display = 'block';
     return;
   }
 
   empty.style.display = 'none';
-  list.innerHTML = '';
 
   preguntas.forEach((q, idx) => {
     const card = document.createElement('div');
