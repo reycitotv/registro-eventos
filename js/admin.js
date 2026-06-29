@@ -48,7 +48,6 @@ function toggleClave() {
 
 // ── MODAL ────────────────────────────────────────────────────
 function abrirModal(id = null) {
-  // Limpiar estado completamente
   editandoId = id;
   tipoActual = 'texto';
 
@@ -57,7 +56,6 @@ function abrirModal(id = null) {
   document.getElementById('options-list').innerHTML = '';
   document.getElementById('options-section').style.display = 'none';
 
-  // Resetear botones de tipo
   document.querySelectorAll('.type-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.type === 'texto');
   });
@@ -141,6 +139,7 @@ function guardarPregunta() {
   guardarPreguntas();
   cerrarModal();
   toast('✅ Pregunta guardada');
+  marcarCambiosPendientes(); // ← NUEVO
 }
 
 // ── RENDER ───────────────────────────────────────────────────
@@ -154,7 +153,6 @@ function renderPreguntas() {
 
   count.textContent = `${preguntas.length} pregunta${preguntas.length !== 1 ? 's' : ''}`;
 
-  // Limpiar solo las tarjetas, nunca el elemento empty
   Array.from(list.children).forEach(child => {
     if (child.id !== 'questions-empty') child.remove();
   });
@@ -224,6 +222,7 @@ function renderPreguntas() {
       dragSrcIdx = null;
       renderPreguntas();
       guardarPreguntas();
+      marcarCambiosPendientes(); // ← NUEVO
     });
 
     list.appendChild(card);
@@ -235,10 +234,29 @@ function eliminarPregunta(id) {
   renderPreguntas();
   guardarPreguntas();
   toast('🗑️ Pregunta eliminada');
+  marcarCambiosPendientes(); // ← NUEVO
 }
 
 function guardarPreguntas() {
   localStorage.setItem('last_preguntas', JSON.stringify(preguntas));
+}
+
+// ── CAMBIOS PENDIENTES ───────────────────────────────────────
+function marcarCambiosPendientes() {
+  const btn = document.querySelector('.btn-save');
+  btn.textContent = '⚠️ Cambios sin guardar — Regenerar URL →';
+  btn.style.background = '#d97706';
+  btn.style.boxShadow  = '0 4px 16px rgba(217,119,6,0.4)';
+  // Ocultar resultado anterior para que no usen un QR desactualizado
+  document.getElementById('result-card').classList.remove('show');
+  urlGenerada = '';
+}
+
+function limpiarCambiosPendientes() {
+  const btn = document.querySelector('.btn-save');
+  btn.textContent = '🔒 Generar URL cifrada →';
+  btn.style.background = '';
+  btn.style.boxShadow  = '';
 }
 
 // ── CIFRADO ──────────────────────────────────────────────────
@@ -275,7 +293,6 @@ async function generarURL() {
   localStorage.setItem('last_radio', radio);
   localStorage.setItem('last_clave', clave);
 
-  // Serializar preguntas: label~tipo~op1|op2 separados por §
   const preguntasStr = preguntas.map(q => {
     const ops = q.opciones && q.opciones.length ? q.opciones.join('|') : '';
     return `${q.label}~${q.tipo}~${ops}`;
@@ -294,6 +311,7 @@ async function generarURL() {
   document.getElementById('result-url').textContent    = urlGenerada;
   document.getElementById('result-card').classList.add('show');
   document.getElementById('result-card').scrollIntoView({ behavior: 'smooth' });
+  limpiarCambiosPendientes(); // ← NUEVO
 }
 
 function copiarURL() {
