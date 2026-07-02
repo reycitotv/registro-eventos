@@ -55,6 +55,8 @@ function abrirModal(id = null) {
   document.getElementById('q-label').value = '';
   document.getElementById('options-list').innerHTML = '';
   document.getElementById('options-section').style.display = 'none';
+  document.getElementById('otro-section').style.display = 'none';
+  document.getElementById('q-otro').checked = false;
 
   document.querySelectorAll('.type-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.type === 'texto');
@@ -65,7 +67,10 @@ function abrirModal(id = null) {
     if (q) {
       document.getElementById('q-label').value = q.label;
       seleccionarTipo(q.tipo);
-      if (q.tipo === 'lista') q.opciones.forEach(op => agregarOpcion(op));
+      if (q.tipo === 'lista') {
+        q.opciones.forEach(op => agregarOpcion(op));
+        document.getElementById('q-otro').checked = !!q.otro;
+      }
     }
   }
 
@@ -77,6 +82,8 @@ function cerrarModal() {
   document.getElementById('q-label').value = '';
   document.getElementById('options-list').innerHTML = '';
   document.getElementById('options-section').style.display = 'none';
+  document.getElementById('otro-section').style.display = 'none';
+  document.getElementById('q-otro').checked = false;
   document.querySelectorAll('.type-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.type === 'texto');
   });
@@ -94,6 +101,7 @@ function seleccionarTipo(tipo) {
     btn.classList.toggle('active', btn.dataset.type === tipo);
   });
   document.getElementById('options-section').style.display = tipo === 'lista' ? 'block' : 'none';
+  document.getElementById('otro-section').style.display    = tipo === 'lista' ? 'block' : 'none';
 }
 
 function agregarOpcion(valor = '') {
@@ -122,24 +130,27 @@ function guardarPregunta() {
   if (!label) { toast('⚠️ Escribe el texto de la pregunta', true); return; }
 
   let opciones = [];
+  let otro     = false;
+
   if (tipoActual === 'lista') {
     opciones = Array.from(document.querySelectorAll('#options-list .option-row input'))
       .map(i => i.value.trim()).filter(Boolean);
     if (opciones.length < 2) { toast('⚠️ Agrega al menos 2 opciones', true); return; }
+    otro = document.getElementById('q-otro').checked;
   }
 
   if (editandoId !== null) {
     const idx = preguntas.findIndex(p => p.id === editandoId);
-    if (idx !== -1) preguntas[idx] = { ...preguntas[idx], label, tipo: tipoActual, opciones };
+    if (idx !== -1) preguntas[idx] = { ...preguntas[idx], label, tipo: tipoActual, opciones, otro };
   } else {
-    preguntas.push({ id: Date.now(), label, tipo: tipoActual, opciones });
+    preguntas.push({ id: Date.now(), label, tipo: tipoActual, opciones, otro });
   }
 
   renderPreguntas();
   guardarPreguntas();
   cerrarModal();
   toast('✅ Pregunta guardada');
-  marcarCambiosPendientes(); // ← NUEVO
+  marcarCambiosPendientes();
 }
 
 // ── RENDER ───────────────────────────────────────────────────
@@ -170,9 +181,13 @@ function renderPreguntas() {
     card.dataset.id = q.id;
     card.draggable = true;
 
-    const opcionesHTML = q.tipo === 'lista' && q.opciones.length
-      ? `<div class="question-options-preview">${q.opciones.map(op => `<span class="option-chip">${op}</span>`).join('')}</div>`
-      : '';
+    // Mostrar opciones + badge OTRO si aplica
+    let opcionesHTML = '';
+    if (q.tipo === 'lista' && q.opciones.length) {
+      const chips = q.opciones.map(op => `<span class="option-chip">${op}</span>`).join('');
+      const otroChip = q.otro ? `<span class="option-chip" style="border-color:rgba(245,158,11,0.4);color:#fcd34d">+ OTRO</span>` : '';
+      opcionesHTML = `<div class="question-options-preview">${chips}${otroChip}</div>`;
+    }
 
     card.innerHTML = `
       <div class="question-header">
@@ -205,12 +220,7 @@ function renderPreguntas() {
     });
 
     card.addEventListener('dragend', () => card.classList.remove('dragging'));
-
-    card.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      card.classList.add('drag-over');
-    });
-
+    card.addEventListener('dragover', (e) => { e.preventDefault(); card.classList.add('drag-over'); });
     card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
 
     card.addEventListener('drop', (e) => {
@@ -222,7 +232,7 @@ function renderPreguntas() {
       dragSrcIdx = null;
       renderPreguntas();
       guardarPreguntas();
-      marcarCambiosPendientes(); // ← NUEVO
+      marcarCambiosPendientes();
     });
 
     list.appendChild(card);
@@ -234,7 +244,7 @@ function eliminarPregunta(id) {
   renderPreguntas();
   guardarPreguntas();
   toast('🗑️ Pregunta eliminada');
-  marcarCambiosPendientes(); // ← NUEVO
+  marcarCambiosPendientes();
 }
 
 function guardarPreguntas() {
@@ -247,7 +257,6 @@ function marcarCambiosPendientes() {
   btn.textContent = '⚠️ Cambios sin guardar — Regenerar URL →';
   btn.style.background = '#d97706';
   btn.style.boxShadow  = '0 4px 16px rgba(217,119,6,0.4)';
-  // Ocultar resultado anterior para que no usen un QR desactualizado
   document.getElementById('result-card').classList.remove('show');
   urlGenerada = '';
 }
@@ -293,9 +302,11 @@ async function generarURL() {
   localStorage.setItem('last_radio', radio);
   localStorage.setItem('last_clave', clave);
 
+  // Serializar: label~tipo~op1|op2~1(otro) separados por §
   const preguntasStr = preguntas.map(q => {
-    const ops = q.opciones && q.opciones.length ? q.opciones.join('|') : '';
-    return `${q.label}~${q.tipo}~${ops}`;
+    const ops  = q.opciones && q.opciones.length ? q.opciones.join('|') : '';
+    const otro = q.otro ? '1' : '0';
+    return `${q.label}~${q.tipo}~${ops}~${otro}`;
   }).join('§');
 
   const payload = `${nombre}|${lat}|${lng}|${radio}|${preguntasStr}`;
@@ -311,7 +322,7 @@ async function generarURL() {
   document.getElementById('result-url').textContent    = urlGenerada;
   document.getElementById('result-card').classList.add('show');
   document.getElementById('result-card').scrollIntoView({ behavior: 'smooth' });
-  limpiarCambiosPendientes(); // ← NUEVO
+  limpiarCambiosPendientes();
 }
 
 function copiarURL() {

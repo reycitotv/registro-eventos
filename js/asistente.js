@@ -25,29 +25,38 @@ async function descifrarURL() {
     const valido  = await verificarFirma(payload, firma);
     if (!valido) return null;
 
-    // Formato: nombre|lat|lng|radio|preguntasStr
     const separatorIdx = payload.indexOf('|');
     const rest1        = payload.indexOf('|', separatorIdx + 1);
     const rest2        = payload.indexOf('|', rest1 + 1);
     const rest3        = payload.indexOf('|', rest2 + 1);
 
-    const nombre      = payload.substring(0, separatorIdx);
-    const lat         = parseFloat(payload.substring(separatorIdx + 1, rest1));
-    const lng         = parseFloat(payload.substring(rest1 + 1, rest2));
-    const radio       = parseInt(payload.substring(rest2 + 1, rest3)) || 50;
+    const nombre       = payload.substring(0, separatorIdx);
+    const lat          = parseFloat(payload.substring(separatorIdx + 1, rest1));
+    const lng          = parseFloat(payload.substring(rest1 + 1, rest2));
+    const radio        = parseInt(payload.substring(rest2 + 1, rest3)) || 50;
     const preguntasStr = payload.substring(rest3 + 1);
 
-    // Deserializar preguntas: label~tipo~op1|op2 separados por §
+    // Formato: label~tipo~op1|op2~otro(0/1) separados por §
     const preguntas = preguntasStr ? preguntasStr.split('§').map(p => {
-      const parts   = p.split('~');
-      const label   = parts[0] || '';
-      const tipo    = parts[1] || 'texto';
+      const parts    = p.split('~');
+      const label    = parts[0] || '';
+      const tipo     = parts[1] || 'texto';
       const opciones = parts[2] ? parts[2].split('|').filter(Boolean) : [];
-      return { label, tipo, opciones };
+      const otro     = parts[3] === '1';
+      return { label, tipo, opciones, otro };
     }) : [];
 
     return { nombreEvento: nombre, latEvento: lat, lngEvento: lng, radioMetros: radio, preguntas };
   } catch(e) { return null; }
+}
+
+// ── FORZAR MAYÚSCULAS ────────────────────────────────────────
+function forzarMayusculas(input) {
+  input.addEventListener('input', () => {
+    const pos = input.selectionStart;
+    input.value = input.value.toUpperCase();
+    input.setSelectionRange(pos, pos);
+  });
 }
 
 // ── GENERAR CAMPOS DEL FORMULARIO DINÁMICAMENTE ──────────────
@@ -60,41 +69,101 @@ function generarCampos(preguntas) {
     const div = document.createElement('div');
     div.className = 'field';
 
-    let inputHTML = '';
+    const label = document.createElement('label');
+    label.setAttribute('for', id);
+    label.textContent = q.label + ' *';
+    div.appendChild(label);
 
     if (q.tipo === 'texto') {
-      inputHTML = `<input type="text" id="${id}" placeholder="Escribe aquí...">`;
+      const input       = document.createElement('input');
+      input.type        = 'text';
+      input.id          = id;
+      input.placeholder = 'Escribe aquí...';
+      forzarMayusculas(input);
+      div.appendChild(input);
+
     } else if (q.tipo === 'lista') {
-      const opts = q.opciones.map(op => `<option value="${op}">${op}</option>`).join('');
-      inputHTML  = `
-        <select id="${id}">
-          <option value="">— Selecciona una opción —</option>
-          ${opts}
-        </select>`;
+      const select = document.createElement('select');
+      select.id = id;
+
+      const defaultOpt       = document.createElement('option');
+      defaultOpt.value       = '';
+      defaultOpt.textContent = '— Selecciona una opción —';
+      select.appendChild(defaultOpt);
+
+      q.opciones.forEach(op => {
+        const opt       = document.createElement('option');
+        opt.value       = op.toUpperCase();
+        opt.textContent = op.toUpperCase();
+        select.appendChild(opt);
+      });
+
+      // Solo agregar OTRO si el admin lo activó
+      if (q.otro) {
+        const otroOpt       = document.createElement('option');
+        otroOpt.value       = 'OTRO';
+        otroOpt.textContent = 'OTRO';
+        select.appendChild(otroOpt);
+      }
+
+      // Campo de texto que aparece al elegir OTRO
+      const otroDiv          = document.createElement('div');
+      otroDiv.id             = `otro_${idx}`;
+      otroDiv.style.display  = 'none';
+      otroDiv.style.marginTop = '8px';
+
+      const otroInput       = document.createElement('input');
+      otroInput.type        = 'text';
+      otroInput.id          = `otro_input_${idx}`;
+      otroInput.placeholder = 'Especifica tu respuesta...';
+      forzarMayusculas(otroInput);
+      otroDiv.appendChild(otroInput);
+
+      select.addEventListener('change', () => {
+        const mostrar = select.value === 'OTRO';
+        otroDiv.style.display = mostrar ? 'block' : 'none';
+        if (!mostrar) otroInput.value = '';
+      });
+
+      div.appendChild(select);
+      div.appendChild(otroDiv);
+
     } else if (q.tipo === 'sino') {
-      inputHTML = `
-        <div class="sino-group" id="${id}">
-          <button type="button" class="sino-btn" data-val="Sí" onclick="seleccionarSiNo(this, '${id}')">✅ Sí</button>
-          <button type="button" class="sino-btn" data-val="No" onclick="seleccionarSiNo(this, '${id}')">❌ No</button>
-        </div>`;
+      const group     = document.createElement('div');
+      group.className = 'sino-group';
+      group.id        = id;
+
+      ['SÍ', 'NO'].forEach(val => {
+        const btn        = document.createElement('button');
+        btn.type         = 'button';
+        btn.className    = 'sino-btn';
+        btn.dataset.val  = val;
+        btn.textContent  = val === 'SÍ' ? '✅ SÍ' : '❌ NO';
+        btn.addEventListener('click', () => {
+          group.querySelectorAll('.sino-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          group.dataset.value = val;
+        });
+        group.appendChild(btn);
+      });
+
+      div.appendChild(group);
+
     } else if (q.tipo === 'fecha') {
-      inputHTML = `<input type="date" id="${id}">`;
+      const input = document.createElement('input');
+      input.type  = 'date';
+      input.id    = id;
+      div.appendChild(input);
     }
 
-    div.innerHTML = `
-      <label for="${id}">${q.label} *</label>
-      ${inputHTML}
-      <div class="field-error" id="err_${id}">Este campo es obligatorio</div>
-    `;
+    const errDiv       = document.createElement('div');
+    errDiv.className   = 'field-error';
+    errDiv.id          = `err_${id}`;
+    errDiv.textContent = 'Este campo es obligatorio';
+    div.appendChild(errDiv);
+
     container.appendChild(div);
   });
-}
-
-function seleccionarSiNo(btn, groupId) {
-  const group = document.getElementById(groupId);
-  group.querySelectorAll('.sino-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  group.dataset.value = btn.dataset.val;
 }
 
 // ── MOSTRAR PANTALLA ─────────────────────────────────────────
@@ -125,8 +194,8 @@ function setStatusCard(tipo, icono, titulo, subtitulo) {
   card.className = 'status-card ' + tipo;
   document.getElementById('geo-spinner').style.display = 'none';
   card.querySelector('.status-icon')?.remove();
-  const iconEl = document.createElement('div');
-  iconEl.className = 'status-icon';
+  const iconEl       = document.createElement('div');
+  iconEl.className   = 'status-icon';
   iconEl.textContent = icono;
   card.insertBefore(iconEl, card.querySelector('.status-text'));
   card.querySelector('.status-text strong').textContent = titulo;
@@ -142,7 +211,6 @@ window.addEventListener('load', async () => {
 
   const STORAGE_KEY = 'registrado_' + CONFIG.nombreEvento.replace(/\s+/g, '_').toLowerCase();
 
-  // Verificar registro previo
   try {
     const r = localStorage.getItem(STORAGE_KEY);
     if (r) {
@@ -153,7 +221,6 @@ window.addEventListener('load', async () => {
     }
   } catch(e) {}
 
-  // Generar campos del formulario
   generarCampos(CONFIG.preguntas);
 
   if (!navigator.geolocation) { mostrarSolo('denied-screen'); return; }
@@ -182,7 +249,7 @@ window.addEventListener('load', async () => {
   );
 });
 
-// ── VALIDAR Y ENVIAR ─────────────────────────────────────────
+// ── VALIDAR ──────────────────────────────────────────────────
 function validar() {
   const config = window._CONFIG;
   if (!config) return false;
@@ -195,10 +262,21 @@ function validar() {
 
     if (q.tipo === 'texto') {
       valido = document.getElementById(id).value.trim().length >= 1;
+
     } else if (q.tipo === 'lista') {
-      valido = document.getElementById(id).value !== '';
+      const sel = document.getElementById(id);
+      if (sel.value === 'OTRO') {
+        const otroInput = document.getElementById(`otro_input_${idx}`);
+        valido = otroInput && otroInput.value.trim().length >= 1;
+        if (errEl) errEl.textContent = 'Por favor especifica tu respuesta';
+      } else {
+        valido = sel.value !== '';
+        if (errEl) errEl.textContent = 'Este campo es obligatorio';
+      }
+
     } else if (q.tipo === 'sino') {
       valido = !!document.getElementById(id).dataset.value;
+
     } else if (q.tipo === 'fecha') {
       valido = document.getElementById(id).value !== '';
     }
@@ -212,6 +290,7 @@ function validar() {
   return ok;
 }
 
+// ── ENVIAR ───────────────────────────────────────────────────
 async function enviarRegistro() {
   if (!validar()) return;
 
@@ -221,17 +300,31 @@ async function enviarRegistro() {
   btnText.textContent = 'Enviando…';
 
   const config = window._CONFIG;
-
-  // Construir objeto de datos dinámicamente
-  const datos = { evento: config.nombreEvento, hora: new Date().toLocaleString('es-BO', { timeZone: 'America/La_Paz' }) };
+  const datos  = {
+    evento: config.nombreEvento,
+    hora:   new Date().toLocaleString('es-BO', { timeZone: 'America/La_Paz' })
+  };
 
   config.preguntas.forEach((q, idx) => {
     const id = `campo_${idx}`;
     let valor = '';
-    if (q.tipo === 'texto')  valor = document.getElementById(id).value.trim();
-    if (q.tipo === 'lista')  valor = document.getElementById(id).value;
-    if (q.tipo === 'sino')   valor = document.getElementById(id).dataset.value || '';
-    if (q.tipo === 'fecha')  valor = document.getElementById(id).value;
+
+    if (q.tipo === 'texto') {
+      valor = document.getElementById(id).value.trim();
+    } else if (q.tipo === 'lista') {
+      const sel = document.getElementById(id);
+      if (sel.value === 'OTRO') {
+        const otroInput = document.getElementById(`otro_input_${idx}`);
+        valor = 'OTRO: ' + (otroInput ? otroInput.value.trim() : '');
+      } else {
+        valor = sel.value;
+      }
+    } else if (q.tipo === 'sino') {
+      valor = document.getElementById(id).dataset.value || '';
+    } else if (q.tipo === 'fecha') {
+      valor = document.getElementById(id).value;
+    }
+
     datos[q.label] = valor;
   });
 
@@ -242,7 +335,6 @@ async function enviarRegistro() {
       body: JSON.stringify(datos)
     });
 
-    // Guardar nombre del primer campo como identificador
     const primerCampo = config.preguntas.length > 0
       ? datos[config.preguntas[0].label] || 'Asistente'
       : 'Asistente';
