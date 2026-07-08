@@ -137,10 +137,20 @@
       </div>
     </div>
 
+    <!-- Opciones de lista -->
     <div class="options-section" id="options-section" style="display:none">
       <label>Opciones de la lista</label>
       <div class="options-list" id="options-list"></div>
       <button class="btn-add-option" onclick="agregarOpcion()">＋ Agregar opción</button>
+
+      <!-- ← NUEVO: Checkbox OTRO, solo visible cuando tipo = lista -->
+      <div id="otro-section" style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.08)">
+        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; text-transform:none; font-size:13px; letter-spacing:0; font-weight:500; color:#94a3b8">
+          <input type="checkbox" id="q-otro" style="width:16px; height:16px; cursor:pointer; accent-color:#3b82f6">
+          Incluir opción "OTRO" al final de la lista
+        </label>
+        <p style="font-size:11px; color:#64748b; margin-top:4px; margin-left:26px">El asistente podrá escribir su propia respuesta si ninguna opción aplica</p>
+      </div>
     </div>
 
     <div class="modal-actions">
